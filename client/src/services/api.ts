@@ -6,6 +6,10 @@ export const getBaseServerUrl = (): string => {
 
   const hostname = window.location.hostname;
   if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1' && hostname !== '') {
+    // В облачном деплое (порт стандартный 80/443) используем текущий домен сайта
+    if (window.location.port === '' || window.location.port === '80' || window.location.port === '443') {
+      return window.location.origin;
+    }
     return `http://${hostname}:5000`;
   }
   return 'http://192.168.1.38:5000';

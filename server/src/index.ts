@@ -2,6 +2,9 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 
 import authRoutes from './routes/authRoutes.js';
@@ -10,6 +13,9 @@ import chatRoutes from './routes/chatRoutes.js';
 import { setupChatSockets } from './sockets/chatSocket.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +41,29 @@ app.use('/api/chat', chatRoutes);
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Serve static frontend files if present (Fullstack single container deployment)
+const clientDistPath = path.resolve(__dirname, '../../client/dist');
+const altDistPath = path.resolve(__dirname, '../public');
+const staticPath = fs.existsSync(clientDistPath)
+  ? clientDistPath
+  : fs.existsSync(altDistPath)
+  ? altDistPath
+  : null;
+
+if (staticPath) {
+  app.use(express.static(staticPath));
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/api') ||
+      req.path.startsWith('/socket.io') ||
+      req.path === '/health'
+    ) {
+      return next();
+    }
+    res.sendFile(path.join(staticPath, 'index.html'));
+  });
+}
 
 // Socket.IO
 const io = new Server(server, {
