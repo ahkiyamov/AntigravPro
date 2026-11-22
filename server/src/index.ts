@@ -4,8 +4,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
 import { Server } from 'socket.io';
 
+import { prisma } from './prisma.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
@@ -71,6 +73,76 @@ const io = new Server(server, {
 
 setupChatSockets(io);
 
-server.listen(Number(PORT), '0.0.0.0', () => {
+// Auto-seed initial users if DB is brand new/empty
+async function autoSeed() {
+  try {
+    const userCount = await prisma.user.count();
+    if (userCount === 0) {
+      console.log('Database is empty. Auto-seeding initial users...');
+      const pHash = await bcrypt.hash('password123', 10);
+      const aHash = await bcrypt.hash('albert', 10);
+
+      const albert = await prisma.user.create({
+        data: {
+          username: 'albert',
+          email: 'ah@mail.ru',
+          password: aHash,
+          avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=albert',
+          status: 'offline',
+        },
+      });
+
+      const alex = await prisma.user.create({
+        data: {
+          username: 'alex',
+          email: 'alex@example.com',
+          password: pHash,
+          avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=alex',
+          status: 'offline',
+        },
+      });
+
+      const maria = await prisma.user.create({
+        data: {
+          username: 'maria',
+          email: 'maria@example.com',
+          password: pHash,
+          avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=maria',
+          status: 'offline',
+        },
+      });
+
+      let general = await prisma.room.findFirst({
+        where: { name: 'Общий чат', isGroup: true },
+      });
+      if (!general) {
+        general = await prisma.room.create({
+          data: { name: 'Общий чат', isGroup: true },
+        });
+      }
+
+      for (const u of [albert, alex, maria]) {
+        await prisma.roomMember.create({
+          data: { roomId: general.id, userId: u.id },
+        });
+      }
+
+      await prisma.message.create({
+        data: {
+          roomId: general.id,
+          senderId: alex.id,
+          content: 'Всем привет! Добро пожаловать в наш облачный чат! 🚀',
+        },
+      });
+
+      console.log('Auto-seed completed: albert, alex, maria created.');
+    }
+  } catch (err) {
+    console.error('Auto-seed error:', err);
+  }
+}
+
+server.listen(Number(PORT), '0.0.0.0', async () => {
   console.log(`🚀 Chat Server is running on http://0.0.0.0:${PORT}`);
+  await autoSeed();
 });
