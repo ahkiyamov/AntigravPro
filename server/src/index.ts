@@ -4,7 +4,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
 
 import authRoutes from './routes/authRoutes.js';
@@ -13,9 +12,6 @@ import chatRoutes from './routes/chatRoutes.js';
 import { setupChatSockets } from './sockets/chatSocket.js';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
@@ -43,12 +39,12 @@ app.get('/health', (_req, res) => {
 });
 
 // Serve static frontend files if present (Fullstack single container deployment)
-const clientDistPath = path.resolve(__dirname, '../../client/dist');
-const altDistPath = path.resolve(__dirname, '../public');
-const staticPath = fs.existsSync(clientDistPath)
-  ? clientDistPath
-  : fs.existsSync(altDistPath)
-  ? altDistPath
+const publicDir = path.resolve(process.cwd(), 'public');
+const clientDistDir = path.resolve(process.cwd(), '../client/dist');
+const staticPath = fs.existsSync(publicDir)
+  ? publicDir
+  : fs.existsSync(clientDistDir)
+  ? clientDistDir
   : null;
 
 if (staticPath) {

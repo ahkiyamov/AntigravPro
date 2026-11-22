@@ -1,5 +1,5 @@
 # 1. Build Client (React + Vite)
-FROM node:20-alpine AS client-builder
+FROM node:22-alpine AS client-builder
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install
@@ -7,7 +7,8 @@ COPY client/ ./
 RUN npm run build
 
 # 2. Build Server (Express + TypeScript + Prisma)
-FROM node:20-alpine AS server-builder
+FROM node:22-alpine AS server-builder
+RUN apk add --no-cache openssl
 WORKDIR /app/server
 COPY server/package*.json ./
 COPY server/prisma ./prisma/
@@ -17,7 +18,8 @@ RUN npx prisma generate
 RUN npm run build
 
 # 3. Production Runner
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 COPY --from=server-builder /app/server/package*.json ./
