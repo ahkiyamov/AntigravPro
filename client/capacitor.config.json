@@ -1,0 +1,10 @@
+{
+  "appId": "com.antigrav.chat",
+  "appName": "Antigrav Chat",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}

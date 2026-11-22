@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production build artifacts
+dist/
+client/dist/
+server/dist/
+
+# Android build outputs & Gradle
+client/android/app/build/
+client/android/build/
+client/android/.gradle/
+.gradle/
+*.apk
+*.aab
+
+# Local Database
+server/prisma/dev.db
+server/prisma/dev.db-journal
+
+# Environment & Secrets
+.env
+client/.env
+server/.env
+server/firebase-service-account.json
+
+# Logs & temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
